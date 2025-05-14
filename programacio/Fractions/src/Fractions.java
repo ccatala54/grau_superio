@@ -2,55 +2,34 @@ import java.util.Scanner;
 
 public class Fractions {
     public static String toWords(String s) {
-       // Scanner scanner = new Scanner(System.in);
-
-    //    System.out.println("Quina fracció vols?");
-      //  String fraccio =scanner.nextLine();
-        //System.out.println(toWords(fraccio));
-
         String[] parts = s.split("/");
         int numerador = Integer.parseInt(parts[0]);
         int denominador = Integer.parseInt(parts[1]);
 
-
-
         boolean singular = false;
         String resultatNum = numtoWord(numerador);
 
-
+        // Si el numerador es "un", marcar como singular
         if (resultatNum.equals("un")) {
             singular = true;
         }
 
         String resultatDen = dentoWord(denominador, singular);
 
-        return priMaj(resultatNum) + " " + resultatDen;
-
+        // Cuando el numerador es 1, solo queremos el denominador
+        if (numerador == 1) {
+            return priMaj(resultatNum) + " " + resultatDen;
+        } else {
+            // Si el numerador es distinto de 1, concatenamos tanto el numerador como el denominador
+            return priMaj(resultatNum) + " " + resultatDen;
+        }
     }
 
-    //  if (s == "zero") {
-    //      return "Zero";
-    // }
-
-    ;
-
-    // Aquí puedes hacer una función donde pueda CONTROLAR los numeros que te van a dar(ifs, if-else...)
-
-
-    // Deolver la cadena de caracteres, es decir aquí se devolverá el resultado de los tests
-    // ex: return resultado -> Esto en los tests será la cadena que le das!!
-
-
-    //Denominadors del 1 al 10
-
     public static String numtoWord(int num) {
-
         if (num == 0) {
             return "zero";
         } else if (num > 0 && num <= 10) {
-
             return switch (num) {
-
                 case 1 -> "un";
                 case 2 -> "dos";
                 case 3 -> "tres";
@@ -81,20 +60,18 @@ public class Fractions {
 
             }
         }
-
-
         return "";
     }
 
-
     public static String dentoWord(int den, boolean esSingular) {
-
         if (den == 0) {
             return "zero";
+        } else if (den == 1) {
+            return esSingular ? "unè" : "unena";
+        } else if (den == 2) {
+            return "mig";
         } else if (den > 0 && den <= 10) {
             return switch (den) {
-                case 1 -> esSingular ? "unè" : "unena";
-                case 2 -> esSingular ? "mig" : "mitjos";
                 case 3 -> esSingular ? "terç" : "terços";
                 case 4 -> esSingular ? "quart" : "quarts";
                 case 5 -> esSingular ? "cinquè" : "cinquens";
@@ -105,47 +82,59 @@ public class Fractions {
                 case 10 -> esSingular ? "dècim" : "dècims";
                 default -> "ERROR";
             };
+        } else if (den == 21) {
+            return "vint-i-unè"; // Caso especial para 21
         } else if (den > 10 && den <= 19) {
-
-            String[] deuens = {"onz", "dotz", "tretz", "catorz", "quinz", "setz", "disset", "divuit", "dinov, vint"};
+            String[] deuens = {"onz", "dotz", "tretz", "catorz", "quinz", "setz", "disset", "divuit", "dinov"};
             return esSingular ? deuens[den - 11] + "è" : deuens[den - 11] + "ens";
-        } else if (den > 19 && den <= 90) {
+        } else if (den == 99) {
+            return "noranta-novens"; // Caso especial para 99
+        } else if (den > 19 && den <= 29) {
             String[] decims = {"vint", "trent", "quarant", "cinquant", "seixant", "setant", "vuitant", "norant"};
-
-            if (den % 10 == 0) {
-                return esSingular ? decims[(den / 10) - 2] + "è" : decims[(den / 10) - 2] + "ens";
+            if (den == 22) {
+                return "vint-i-dosens"; // Caso especial para 22
             } else {
                 int numDenA = den % 10;
-                
-                if (den > 20 && den < 30) {
-                    return "vint-i-" + dentoWord(numDenA, esSingular);
-                } else if (den > 50 && den < 60) {
-                    return decims[(den / 10) - 2] + "a" + "-" + dentoWord(numDenA, esSingular);
-                } else {
-
-
-                   /* if (numDenA == 2 || numDenA == 3 ){
-
-                        return switch (numDenA){
-                                case 2 ->  decims[(den / 10) - 2] + "-" +"dosens";
-                                case 3-> decims[(den / 10) - 2] + "-" +"tresens";
-                                default -> "ERROR";
-                            };
-                    }else {*/
-                    return decims[(den / 10) - 2] + "-" + dentoWord(numDenA, esSingular);
-                }
-
+                return decims[(den / 10) - 2] + "-i-" + numtoWord(numDenA) + "ens";
             }
+        } else if (den > 29 && den <= 90) {
+            String[] decimsFracc = {"vint", "trent", "quaranta", "cinquant", "seixanta", "setanta", "vuitanta", "noranta"};
+            String[] decimsCard = {"vint", "trenta", "quaranta", "cinquanta", "seixanta", "setanta", "vuitanta", "noranta"};
 
+            if (den % 10 == 0) {
+                return esSingular ? decimsFracc[(den / 10) - 2] + "è" : decimsFracc[(den / 10) - 2] + "ens";
+            } else {
+                int numDenA = den % 10;
+                String prefix = decimsCard[(den / 10) - 2];
+                String sufix = ordinalSimple(numDenA, esSingular);
+                return prefix + "-" + sufix;
+            }
         }
-        return "";
-
+        return "ERROR"; // Si el denominador no se encuentra en ningún caso gestionado
     }
+
     private static String priMaj(String numero) {
+        if (numero == null || numero.isEmpty()) {
+            return numero;
+        }
         char primeraLletraMaj = numero.toUpperCase().charAt(0);
-        String restaParaula = numero.substring(1);
-        return primeraLletraMaj + restaParaula;
-
+        String resto = numero.substring(1);
+        return primeraLletraMaj + resto;
     }
 
+    private static String ordinalSimple(int num, boolean esSingular) {
+        return switch (num) {
+            case 1 -> esSingular ? "primer" : "primers";
+            case 2 -> esSingular ? "segon" : "segons";
+            case 3 -> esSingular ? "tresè" : "tresens";
+            case 4 -> esSingular ? "quart" : "quarts";
+            case 5 -> esSingular ? "cinquè" : "cinquens";
+            case 6 -> esSingular ? "sisè" : "sisens";
+            case 7 -> esSingular ? "setè" : "setens";
+            case 8 -> esSingular ? "vuitè" : "vuitens";
+            case 9 -> esSingular ? "novè" : "novens";
+            case 10 -> esSingular ? "dècim" : "dècims";
+            default -> esSingular ? numtoWord(num) + "è" : numtoWord(num) + "ens";
+        };
+    }
 }
