@@ -1,140 +1,252 @@
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Fractions {
-    public static String toWords(String s) {
-        String[] parts = s.split("/");
-        int numerador = Integer.parseInt(parts[0]);
-        int denominador = Integer.parseInt(parts[1]);
 
-        boolean singular = false;
-        String resultatNum = numtoWord(numerador);
+    private static String[] numUnics = {"zero", "un", "dos", "tres", "quatre", "cinc", "sis", "set", "vuit", "nou", "deu",
+            "onze", "dotze", "tretze", "catorze", "quinze", "setze", "disset", "divuit", "dinou"};
 
-        // Si el numerador es "un", marcar como singular
-        if (resultatNum.equals("un")) {
-            singular = true;
+    private static String[] desenes = {"", "", "vint", "trenta", "quaranta", "cinquanta", "seixanta", "setanta", "vuitanta", "noranta"};
+
+    private static String[] fraccions = {"", "unens", "mitjos", "terços", "quarts", "cinquens", "sisens", "setens", "vuitens", "novens", "dècims",
+            "onzens", "dotzens", "tretzens", "catorzens", "quinzens", "setzens", "dissetens", "divuitens", "dinovens"};
+
+    private static String[] pluralToSingular = {"", "unè", "mig", "terç", "quart", "cinquè", "sisè", "setè", "vuitè", "novè", "dècim",
+            "onzè", "dotzè", "tretzè", "catorzè", "quinzè", "setzè", "dissetè", "divuitè", "dinovè"};
+
+    private static String[] multiples10E = {"", "", "vintè", "trentè", "quarantè", "cinquantè", "seixantè", "setantè", "vuitantè", "norantè", "centè"};
+    private static String[] multiples10ENS = {"", "", "vintens", "trentens", "quarantens", "cinquantens", "seixantens", "setantens", "vuitantens", "norantens", "centens"};
+
+    public static String toWords(String fraccio) {
+
+        String[] parts = fraccio.split("/"); // Separar por "/"
+        int numerador = Integer.parseInt(parts[0]); //converteix un String a un numero
+        int denominador = Integer.parseInt(parts[1]); // pasara la segona part de la barra
+
+        //SIMPLIFICACIO
+        String fraccioSimplified;
+        if (numerador >= denominador) {
+            fraccioSimplified = reduccio(numerador, denominador);
+        } else { // si no es simplifica anar a parsetjar cada un
+            fraccioSimplified = parseNumerador(numerador) + " " + parseDenominador(numerador, denominador);
         }
-
-        String resultatDen = dentoWord(denominador, singular);
-
-        // Cuando el numerador es 1, solo queremos el denominador
-        if (numerador == 1) {
-            return priMaj(resultatNum) + " " + resultatDen;
-        } else {
-            // Si el numerador es distinto de 1, concatenamos tanto el numerador como el denominador
-            return priMaj(resultatNum) + " " + resultatDen;
-        }
+        return fraccioSimplified.substring(0, 1).toUpperCase() + fraccioSimplified.substring(1);
     }
 
-    public static String numtoWord(int num) {
-        if (num == 0) {
-            return "zero";
-        } else if (num > 0 && num <= 10) {
-            return switch (num) {
-                case 1 -> "un";
-                case 2 -> "dos";
-                case 3 -> "tres";
-                case 4 -> "quatre";
-                case 5 -> "cinc";
-                case 6 -> "sis";
-                case 7 -> "set";
-                case 8 -> "vuit";
-                case 9 -> "nou";
-                case 10 -> "deu";
-                default -> "ERROR";
-            };
-        } else if (num > 10 && num <= 19) {
-            String[] deuens = {"onze", "dotze", "tretze", "catorze", "quinze", "setze", "disset", "divuit", "dinou"};
-            return deuens[num - 11];
-        } else if (num > 19 && num <= 90) {
-            String[] decims = {"vint", "trenta", "quaranta", "cinquanta", "seixanta", "setanta", "vuitanta", "noranta"};
-            if (num % 10 == 0) {
-                return decims[(num / 10) - 2];
-            } else {
-                int numNumA = num % 10;
 
-                if (num > 20 && num < 30) {
-                    return "vint-i-" + numtoWord(numNumA);
-                } else {
-                    return decims[(num / 10) - 2] + "-" + numtoWord(numNumA);
-                }
+    private static String reduccio(int numerador, int denominador) {
+        int partEntera = numerador / denominador; // Sera el numerador (primera part)
+        int newNumerador = numerador % denominador; // Posterior a la coma ','
+        int mcd = calcularMCD(newNumerador, denominador); // cercar el divisor comu per simplificar la fraccio.
 
+        // Ho possam primer per descartar possibles erros "100/5"
+        if (numerador % denominador == 0) { // En cas que el residu sigui zero.
+            return parseNumerador(partEntera); //Nomes torna el quocient
+        }
+        if (newNumerador % mcd == 0) {
+            return parseNumerador(partEntera) + ", " + parseNumerador(newNumerador) + " " + parseDenominador(newNumerador, denominador);
+        }
+        newNumerador /= mcd;
+        denominador /= mcd;
+        return parseNumerador(partEntera) + ", " + parseNumerador(newNumerador) + " " + parseDenominador(numerador, denominador);
+    }
+
+    private static int calcularMCD(int a, int b) {
+        while (b != 0) {
+            if (a < b) {
+                return a;
             }
+            int temp = b;
+            b = a % b;
+            a = temp;
         }
-        return "";
+        return a;
     }
 
-    public static String dentoWord(int den, boolean esSingular) {
-        if (den == 0) {
-            return "zero";
-        } else if (den == 1) {
-            return esSingular ? "unè" : "unena";
-        } else if (den == 2) {
-            return "mig";
-        } else if (den > 0 && den <= 10) {
-            return switch (den) {
-                case 3 -> esSingular ? "terç" : "terços";
-                case 4 -> esSingular ? "quart" : "quarts";
-                case 5 -> esSingular ? "cinquè" : "cinquens";
-                case 6 -> esSingular ? "sisè" : "sisens";
-                case 7 -> esSingular ? "setè" : "setens";
-                case 8 -> esSingular ? "vuitè" : "vuitens";
-                case 9 -> esSingular ? "novè" : "novens";
-                case 10 -> esSingular ? "dècim" : "dècims";
-                default -> "ERROR";
-            };
-        } else if (den == 21) {
-            return "vint-i-unè"; // Caso especial para 21
-        } else if (den > 10 && den <= 19) {
-            String[] deuens = {"onz", "dotz", "tretz", "catorz", "quinz", "setz", "disset", "divuit", "dinov"};
-            return esSingular ? deuens[den - 11] + "è" : deuens[den - 11] + "ens";
-        } else if (den == 99) {
-            return "noranta-novens"; // Caso especial para 99
-        } else if (den > 19 && den <= 29) {
-            String[] decims = {"vint", "trent", "quarant", "cinquant", "seixant", "setant", "vuitant", "norant"};
-            if (den == 22) {
-                return "vint-i-dosens"; // Caso especial para 22
-            } else {
-                int numDenA = den % 10;
-                return decims[(den / 10) - 2] + "-i-" + numtoWord(numDenA) + "ens";
+    private static String parseNumerador(int numerador) {
+        if (numerador == 0) {
+            return "Zero";
+        }
+        return numeroToWord(numerador);
+    }
+
+    private static String parseDenominador(int numerador, int denominador) {
+        String result = numeroToWord(denominador); // Porta la fraccio desde towords
+
+        String[] resultSplitted = result.split(" "); // Separacio de la cadena en array de paraules.
+        // Analitza la darrera paraula.
+        String lastOne = resultSplitted[resultSplitted.length - 1]; // Agafam es darrer element de l'array (sufix)
+
+        int indexLastOne = Arrays.asList(numUnics).indexOf(lastOne); // cercar aquest element dins la llista de NumUnics.
+
+        if (denominador < 20 && indexLastOne >= 0) { //comporvacions. Es major que zero perque hem trobat el sufix dins la llista.
+            resultSplitted[resultSplitted.length - 1] = numerador != 1 ? fraccions[indexLastOne] : pluralToSingular[indexLastOne];
+            // miram numerador per substituir el denominador segons la condiio de si es 1 o no. Plural o singular
+            return String.join(" ", resultSplitted);
+            // juntar els elements d'un array a un string
+            // en un principi hem separat per espais per modificar es darrer en arrays
+            // pero hem de retornar un string per aixo ho convertim amb el join.
+        }
+        indexLastOne = Arrays.asList(desenes).indexOf(lastOne);
+
+        if (indexLastOne >= 0) {
+            // Modifica el darrer element de l'array (sufixe). Si num != 1 == plural --> Multiples10, sino -ENS
+            resultSplitted[resultSplitted.length - 1] = numerador != 1 ? multiples10ENS[indexLastOne] : multiples10E[indexLastOne];
+            return String.join(" ", resultSplitted); //Reconstruim la cadena de texte amb els elements de l'array + espais.
+        }
+
+        int indexOfUn = Arrays.asList(resultSplitted).indexOf("milió") - 1; // Si trobam la paraula, restam 1 per obtenir l paraula de davant
+        if (indexOfUn >= 0 && resultSplitted[indexOfUn].equals("un")) { // Verificacio de l'anterior.
+            List<String> list = new ArrayList<>(Arrays.asList(resultSplitted)); // Creacio d'una nova llista
+            list.remove(indexOfUn); //Eliminacio de la paraula "UN"
+            resultSplitted = new String[resultSplitted.length - 1]; // Cream nou array amb una longitud mes petita.
+            resultSplitted = list.toArray(resultSplitted); // Resultat de la nova llista amb diferent llargaria (index)
+        }
+        resultSplitted[resultSplitted.length - 1] = parseMultiples(numerador, lastOne); // Si no trobam sufix especific, anam a parseMult().
+        return String.join(" ", resultSplitted); // Reconstruccio de tots els ements de l'array amb espais.
+    }
+
+    private static String parseMultiples(int numerador, String lastOne) { //lastOne es per substituir el numero incial pel corresponent en nomenclatura
+        lastOne = lastOne.replace("nou", "nov");
+
+        String[] lastOneSplitted = lastOne.split("-");
+
+        String finalLastOne = lastOneSplitted[lastOneSplitted.length - 1];
+
+        if (finalLastOne.equals("cent")) {
+            lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? "centèsims" : "centèsim";
+            return String.join("-", lastOneSplitted);
+        }
+
+        if (finalLastOne.equals("mil")) {
+            lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? "mil·lèsims" : "mil·lèsim";
+            return String.join("-", lastOneSplitted);
+        }
+
+        if (finalLastOne.equals("milió")) {
+            lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? "milionèsims" : "milionèsim";
+            return String.join("-", lastOneSplitted);
+        }
+
+        if (finalLastOne.equals("deu")) {
+            lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? "dècims" : "dècim";
+            return String.join("-", lastOneSplitted);
+        }
+
+        if (finalLastOne.contains("cinc")) {
+            lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? "cinquens" : "cinquè";
+            return String.join("-", lastOneSplitted);
+        }
+
+        if (finalLastOne.charAt(finalLastOne.length() - 1) == 'e' || finalLastOne.charAt(finalLastOne.length() - 1) == 'è') {
+            finalLastOne = finalLastOne.substring(0, finalLastOne.length() - 1);
+        }
+
+        lastOneSplitted[lastOneSplitted.length - 1] = numerador != 1 ? finalLastOne + "ens" : finalLastOne + "è";
+        return String.join("-", lastOneSplitted);
+    }
+
+    private static String numeroToWord(int numero) {
+        String result = "";
+
+        if (numero / 1_000_000_000 > 0) {
+            result += parseMilMilions(numero);
+        } else if (numero / 1_000_000 > 0) {
+            result += parseMilions(numero);
+        } else if (numero / 100_000 > 0 || numero / 10_000 > 0 || numero / 1_000 > 0) {
+            result += parseMilers(numero);
+        } else if (numero / 100 > 0) {
+            result += parseCentenes(numero);
+        } else if (numero / 10 > 0) { // 10 - 99
+            result += parseDesenes(numero);
+        } else if (numero > 0) { // 0-10
+            result = parseUnitats(numero);
+        }
+
+        return result;
+    }
+
+    private static String parseUnitats(int numero) {
+        return numUnics[numero]; //numerador unitat
+    }
+
+    private static String parseDesenes(int numero) {
+        if (numero != 0 && numero < 20) { // 10 - 19
+            return parseUnitats(numero);
+        }
+
+        if (numero % 10 == 0) { // 10, 20, 30, 40, 50 ...
+            return desenes[numero / 10];
+        }
+
+        if (numero < 30) {
+            return desenes[numero / 10] + "-i-" + parseUnitats(numero % 10);
+        }
+
+        return desenes[numero / 10] + "-" + parseUnitats(numero % 10);
+    }
+
+    private static String parseCentenes(int numero) {
+        if (numero < 100) {
+            return parseDesenes(numero % 1_00);
+        }
+        if (numero % 100 == 0) {
+            if (numero == 100) {
+                return "cent";
             }
-        } else if (den > 29 && den <= 90) {
-            String[] decimsFracc = {"vint", "trent", "quaranta", "cinquant", "seixanta", "setanta", "vuitanta", "noranta"};
-            String[] decimsCard = {"vint", "trenta", "quaranta", "cinquanta", "seixanta", "setanta", "vuitanta", "noranta"};
-
-            if (den % 10 == 0) {
-                return esSingular ? decimsFracc[(den / 10) - 2] + "è" : decimsFracc[(den / 10) - 2] + "ens";
-            } else {
-                int numDenA = den % 10;
-                String prefix = decimsCard[(den / 10) - 2];
-                String sufix = ordinalSimple(numDenA, esSingular);
-                return prefix + "-" + sufix;
-            }
+            return parseUnitats(numero / 1_00) + "-" + "cents";
         }
-        return "ERROR"; // Si el denominador no se encuentra en ningún caso gestionado
-    }
-
-    private static String priMaj(String numero) {
-        if (numero == null || numero.isEmpty()) {
-            return numero;
+        if (numero < 200 && numero > 100) {
+            return "cent " + parseDesenes(numero % 1_00);
         }
-        char primeraLletraMaj = numero.toUpperCase().charAt(0);
-        String resto = numero.substring(1);
-        return primeraLletraMaj + resto;
+        return parseUnitats(numero / 1_00) + "-" + "cents " + parseDesenes(numero % 1_00);
     }
 
-    private static String ordinalSimple(int num, boolean esSingular) {
-        return switch (num) {
-            case 1 -> esSingular ? "primer" : "primers";
-            case 2 -> esSingular ? "segon" : "segons";
-            case 3 -> esSingular ? "tresè" : "tresens";
-            case 4 -> esSingular ? "quart" : "quarts";
-            case 5 -> esSingular ? "cinquè" : "cinquens";
-            case 6 -> esSingular ? "sisè" : "sisens";
-            case 7 -> esSingular ? "setè" : "setens";
-            case 8 -> esSingular ? "vuitè" : "vuitens";
-            case 9 -> esSingular ? "novè" : "novens";
-            case 10 -> esSingular ? "dècim" : "dècims";
-            default -> esSingular ? numtoWord(num) + "è" : numtoWord(num) + "ens";
-        };
+    private static String parseMilers(int numero) {
+        if (numero < 1000) {
+            return parseCentenes(numero);
+        }
+
+        if (numero == 1_000) {
+            return "mil";
+        }
+
+        if (numero < 2_000) {
+            return "mil " + parseCentenes(numero % 1_000);
+        }
+
+        return parseCentenes(numero / 1_000) + " mil " + parseCentenes(numero % 1_000);
     }
+
+    private static String parseMilions(int numero) {
+        if (numero < 1_000_000) {
+            return parseMilers(numero);
+        }
+
+        if (numero < 2_000_000) {
+            return "un milió " + parseMilers(numero % 1_000_000);
+        }
+
+        return parseCentenes(numero / 1_000_000) + " milions " + parseMilers(numero % 1_000_000);
+    }
+
+    private static String parseMilMilions(int numero) {
+        if (numero < 1_000_000_000) {
+            return parseMilions(numero);
+        }
+
+        if (numero == 1_000_000_000) {
+            return "mil milions";
+        }
+
+        if (numero < 2_000_000_000) {
+            return " mil " + parseMilions(numero);
+        }
+
+        return parseCentenes(numero / 1_000_000_000) + " mil " + parseMilions(numero);
+    }
+
+
 }
